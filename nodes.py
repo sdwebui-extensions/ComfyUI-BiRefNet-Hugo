@@ -71,6 +71,7 @@ class BiRefNet_Hugo:
         return {
             "required": {
                 "image": ("IMAGE",),
+                "model": (["ZhengPeng7/BiRefNet", "ZhengPeng7/BiRefNet_HR", "ZhengPeng7/BiRefNet-portrait"],{"default": "ZhengPeng7/BiRefNet"}),
                 "load_local_model": ("BOOLEAN", {"default": False}),
                 "background_color_name": (colors,{"default": "transparency"}), 
                 "device": (["auto", "cuda", "cpu", "mps", "xpu", "meta"],{"default": "auto"})
@@ -87,6 +88,7 @@ class BiRefNet_Hugo:
   
     def background_remove(self, 
                           image, 
+                          model,
                           load_local_model,
                           device, 
                           background_color_name, 
@@ -96,13 +98,16 @@ class BiRefNet_Hugo:
         processed_masks = []
        
         device = get_device_by_name(device)
+        if not os.path.exists(model_path):
+            if os.path.exists(os.path.join(folder_paths.cache_dir, "models/BiRefNet", model.split("/")[-1])):
+                model = os.path.join(folder_paths.cache_dir, "models/BiRefNet", model.split("/")[-1])
         
         if load_local_model:
             local_model_path = kwargs.get("local_model_path", model_path)
             birefnet = AutoModelForImageSegmentation.from_pretrained(local_model_path,trust_remote_code=True)
         else:
             birefnet = AutoModelForImageSegmentation.from_pretrained(
-                hf_id, trust_remote_code=True
+                model, trust_remote_code=True
             )
         
         birefnet.to(device)
